@@ -1,0 +1,238 @@
+import 'package:flutter/material.dart';
+
+void main() {
+  runApp(const MaterialApp(
+    debugShowCheckedModeBanner: false,
+    home: CalculadoraIMC(),
+  ));
+}
+
+// Tela Principal
+class CalculadoraIMC extends StatefulWidget {
+  const CalculadoraIMC({super.key});
+
+  @override
+  State<CalculadoraIMC> createState() => _CalculadoraIMCState();
+}
+
+class _CalculadoraIMCState extends State<CalculadoraIMC> {
+  final TextEditingController _pesoController = TextEditingController();
+  final TextEditingController _alturaController = TextEditingController();
+
+  String generoSelecionado = 'Masculino';
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Seu corpo')),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            // Botões de gênero
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                BotaoGenero(
+                  rotulo: 'Masculino',
+                  selecionado: generoSelecionado == 'Masculino',
+                  aoClicar: () {
+                    setState(() {
+                      generoSelecionado = 'Masculino';
+                    });
+                  },
+                ),
+                const SizedBox(width: 20),
+                BotaoGenero(
+                  rotulo: 'Feminino',
+                  selecionado: generoSelecionado == 'Feminino',
+                  aoClicar: () {
+                    setState(() {
+                      generoSelecionado = 'Feminino';
+                    });
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            // Campo Peso
+            TextField(
+              controller: _pesoController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'Seu peso (kg)',
+              ),
+            ),
+            const SizedBox(height: 10),
+            // Campo Altura
+            TextField(
+              controller: _alturaController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'Sua altura (cm)',
+              ),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                double? peso = double.tryParse(_pesoController.text);
+                double? alturaCm = double.tryParse(_alturaController.text);
+
+                if (peso == null || alturaCm == null || alturaCm == 0) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Por favor, insira valores válidos!')),
+                  );
+                  return;
+                }
+
+                double alturaM = alturaCm / 100;
+                double imc = peso / (alturaM * alturaM);
+
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => TelaResultado(
+                      genero: generoSelecionado,
+                      peso: peso,
+                      altura: alturaCm,
+                      imc: imc,
+                    ),
+                  ),
+                );
+              },
+              child: const Text('Calcular seu IMC'),
+            ),
+            const SizedBox(height: 20),
+            TextButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const TelaCategorias()),
+                );
+              },
+              child: const Text('Ver categorias de IMC'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// Botão de Gênero
+class BotaoGenero extends StatelessWidget {
+  final String rotulo;
+  final bool selecionado;
+  final VoidCallback aoClicar;
+
+  const BotaoGenero({
+    super.key,
+    required this.rotulo,
+    required this.selecionado,
+    required this.aoClicar,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: aoClicar,
+      child: Column(
+        children: [
+          Icon(
+            rotulo == 'Masculino' ? Icons.male : Icons.female,
+            size: 60,
+            color: selecionado ? Colors.blue : Colors.grey,
+          ),
+          Text(
+            rotulo,
+            style: TextStyle(
+              color: selecionado ? Colors.blue : Colors.grey,
+              fontWeight: selecionado ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// Tela de Resultado do IMC
+class TelaResultado extends StatelessWidget {
+  final String genero;
+  final double peso;
+  final double altura;
+  final double imc;
+
+  const TelaResultado({
+    super.key,
+    required this.genero,
+    required this.peso,
+    required this.altura,
+    required this.imc,
+  });
+
+  String classificacaoIMC() {
+    if (imc < 18.5) return 'Abaixo do peso';
+    if (imc < 24.9) return 'Peso normal';
+    if (imc < 29.9) return 'Sobrepeso';
+    return 'Obesidade';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Seu corpo')),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              genero == 'Masculino' ? Icons.male : Icons.female,
+              size: 80,
+              color: genero == 'Masculino' ? Colors.blue : Colors.pink,
+            ),
+            Text('Seu peso (kg): $peso'),
+            Text('Sua altura (cm): $altura'),
+            const SizedBox(height: 20),
+            Text('Seu IMC: ${imc.toStringAsFixed(1)}',
+                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+            Text(classificacaoIMC(), style: const TextStyle(fontSize: 20)),
+            const SizedBox(height: 20),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('Calcular novamente'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// Tela de Categorias de IMC
+class TelaCategorias extends StatelessWidget {
+  const TelaCategorias({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Seu corpo')),
+      body: const Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Categorias de IMC', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+            SizedBox(height: 20),
+            Text('Menor que 18.5: Abaixo do peso.'),
+            Text('18.5 a 24.9: Peso normal.'),
+            Text('25 a 29.9: Sobrepeso.'),
+            Text('30 ou mais: Obesidade.'),
+          ],
+        ),
+      ),
+    );
+  }
+}
